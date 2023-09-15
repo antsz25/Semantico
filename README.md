@@ -1,1 +1,2 @@
-# Semantico
+# Lexico
+Analizador Lexico
