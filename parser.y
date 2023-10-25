@@ -13,6 +13,7 @@ extern int line_count;
       int ival;
       char* sval;
       float fval;
+      char* TYPE;
       OPERADORES_RELACIONALES operadores_relacionales;
       OPERADORES_MATEMATICOS operadores_matematicos;
       struct TreeNode* node;
@@ -40,11 +41,14 @@ extern int line_count;
 %token DESPLEGAR_CARACTERES
 %token ENTRADA
 %token IF_CONDICIONAL
-%token TIPO_DATO
+%token <TYPE> TIPO_DATO
 %token <ival> NUM
 %token <fval> DECIMAL
 %token <sval> ID
 %token <sval> TEXTO
+%left OPERADORES_MATEMATICOS
+%left OPERADORES_RELACIONALES
+
 /*Simbolos no terminales*/
 %start instrucciones
 %%
@@ -71,10 +75,12 @@ asignavalor : ASIGNACION valor
 valor   : NUM
         | ID
         | TEXTO
+        | DECIMAL
         ;
 ecuaciones  : ID ASIGNACION valor_ecuaciones OPERADORES_MATEMATICOS valor_ecuaciones 
             ;
 valor_ecuaciones        : NUM
+                        | DECIMAL
                         | ID
                         ;
 ciclos  : CICLOWHILE condicion bloque_codigo
@@ -90,7 +96,6 @@ leerdatos       : ID ENTRADA valor
 %%
 void yyerror(const char* message) {
     fprintf(stderr, "Error en la línea %d: %s -> %s\n", line_count, message, yytext);
-    exit(1);
 }
 int main(int argc, char *argv[]){
     if (argc < 2) { //Utilizacion de archivo de entrada

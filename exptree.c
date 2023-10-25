@@ -2,6 +2,63 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct SymbolTable{
+    char* name;
+    int value;
+    struct SymbolTable* next;
+} SymbolTable;
+SymbolTable *head = NULL;
+bool contextcheck(char* name){
+    SymbolTable *temp = head;
+    while(temp != NULL){
+        if(strcmp(temp->name, name) == 0){
+            printf("Variable %s is already declared\n", name);
+            return true;
+        }
+        temp = temp->next;
+    }
+    return false;
+}
+void insert(char* name, int value){
+    if(contextcheck(name)){
+        return;
+    }
+    else{
+        SymbolTable *temp = (SymbolTable*)malloc(sizeof(SymbolTable));
+        temp->name = strdup(name);
+        temp->value = value;
+        temp->next = head;
+        head = temp;
+    }
+}
+int lookup(char* name){
+    SymbolTable *temp = head;
+    while(temp != NULL){
+        if(strcmp(temp->name, name) == 0){
+            return temp->value;
+        }
+        temp = temp->next;
+    }
+    printf("Variable %s is not declared\n", name);
+    return -1;
+}
+void print(){
+    SymbolTable *temp = head;
+    while(temp != NULL){
+        printf("%s = %d\n", temp->name, temp->value);
+        temp = temp->next;
+    }
+}
+void deleteFromSymbolTable(){
+    SymbolTable *temp = head;
+    head = head->next;
+    free(temp);
+}
+void deleteSymbolTable(){
+    while(head != NULL){
+        deleteFromSymbolTable();
+    }
+}
 // Estructura para representar un nodo del AST
 typedef struct TreeNode {
     char* data;

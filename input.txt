@@ -1,1 +1,6 @@
-while z == y {}
+while z == y {
+
+    int x = 5;
+    y = v;
+    
+}

@@ -36,14 +36,14 @@ write	 {return (WRITE);}
 read	 {return (READ);}
 if	    {return (IF);}
 
-string  {yylval->TYPE = yytext; return (TYPE);}
-int     {yylval->TYPE = yytext;return (TYPE);}
-float	 {yylval->TYPE = yytext;return (TYPE);}
+string  {yylval->TYPE = yytext; return (TIPO_DATO);}
+int     {yylval->TYPE = yytext;return (TIPO_DATO);}
+float	 {yylval->TYPE = yytext;return (TIPO_DATO);}
 
 \(        return LPAR;
 \)        return RPAR;
 
-{int}      { yylval->ival = atol(yytext); return INTEGER_LITERAL; }
+{int}      { yylval->ival = atol(yytext); return NUM; }
 
 {id}       { yylval->sval = yytext; return ID; }
 {string}   { yylval->sval = yytext; return TEXTO; }
