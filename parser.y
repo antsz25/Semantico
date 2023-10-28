@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "exptree.c"
+#include "exptree.h"	
 void yyerror(const char* message);
 int yylex();
 extern FILE* yyin;
@@ -13,85 +15,152 @@ extern int line_count;
       int ival;
       char* sval;
       float fval;
-      char* TYPE;
-      OPERADORES_RELACIONALES operadores_relacionales;
-      OPERADORES_MATEMATICOS operadores_matematicos;
+      char* type;
+      OP_REL op_rel;
+      OP_MATH op_math;
       struct TreeNode* node;
-      struct TreeNode* nodeleft;
-      struct TreeNode* noderight;
 }
-%token ACCESO_MODIFICADORES
-%token COMENTARIOS
-%token COMILLA_DOBLE
-%token COMILLA_SIMPLE
-%token CORCHETEDER
-%token CORCHETEIZQ
 %token LLAVEDER
 %token LLAVEIZQ
-%token PARENTDER
-%token PARENTIZQ
-%token COMA
-%token GUION_BAJO
+%token LPAR
+%token RPAR
 %token ASIGNACION
-%token DOSPUNTOS
-%token OPERADOR_LOGICO
-%token <operadores_matematicos> OPERADORES_MATEMATICOS
-%token <operadores_relacionales> OPERADORES_RELACIONALES
 %token CICLOWHILE
 %token DESPLEGAR_CARACTERES
 %token ENTRADA
 %token IF_CONDICIONAL
-%token <TYPE> TIPO_DATO
+%token TOK_EOF
+%token <op_math> OP_MATH
+%token <op_rel> OP_REL
+%token <type> TIPO_DATO
 %token <ival> NUM
 %token <fval> DECIMAL
 %token <sval> ID
 %token <sval> TEXTO
-%left OPERADORES_MATEMATICOS
-%left OPERADORES_RELACIONALES
+%left op_math
+%left op_rel
+
+%type <node> valor
+%type <node> instruccion
+%type <node> bloque_codigo
+%type <node> ecuaciones
+%type <node> defvar
+%type <node> inicioaux
+%type <node> valor_ecuaciones
+%type <node> condicion
+%type <node> instrucciones
+%type <node> pregunton
+%type <node> imprimirdatos
+%type <node> cicloswhile
+%type <node> leerdatos
+%type <node> asignavalor
 
 /*Simbolos no terminales*/
 %start instrucciones
 %%
-instrucciones   : instruccion inicioaux
+instrucciones   : instruccion inicioaux {printf("Instruccion\n");}
                 ;
 inicioaux   : 
-            | instrucciones
+            | instrucciones {printf("Instrucciones\n");}
             ;
-instruccion     : defvar
-                | ecuaciones
-                | ciclos
-                | pregunton_comodijoerasmo
-                | imprimirdatos
-                | leerdatos
-                ;
-pregunton_comodijoerasmo    : IF_CONDICIONAL condicion bloque_codigo
-                            ;
-defvar  : TIPO_DATO ID asignavalor 
-        | ID asignavalor 
+instruccion : defvar {printf("Definicion de variable\n");}
+            | ecuaciones {printf("Ecuaciones\n");}
+            | cicloswhile {printf("Ciclo While\n");}
+            | pregunton {printf("Pregunton\n");}
+            | imprimirdatos {printf("Imprimir datos\n");}
+            | leerdatos {printf("Leer datos\n");}
+            ;
+pregunton   : IF_CONDICIONAL condicion bloque_codigo {}
+            ;
+defvar  : TIPO_DATO ID asignavalor {
+            if(!contextcheck($2)){
+                char* type = $1;
+                char* id = $2;
+            }
+            else{
+                yyerror("Variable ya declarada");
+            }
+        }
+        | ID asignavalor {
+            if(!contextcheck($1)){
+                yyerror("Variable no declarada");
+            }
+            else{
+                char* id = $1;
+            }
+        }
         ;
-asignavalor : ASIGNACION valor
-            |
+asignavalor : ASIGNACION valor {
+                char* op = $1;
+            }
+            | 
             ; 
-valor   : NUM
-        | ID
-        | TEXTO
-        | DECIMAL
+valor   : NUM { 
+            if(checktype(type,"int")){
+                putSymbol(id,type);
+                $$ = createNode(op);
+                $$->left = createNode(id);
+                $$->right = createNode($1);
+            }
+            else{
+                yyerror("Tipos de datos incompatibles");
+            }
+        }
+        | ID {            
+            Symboltable* sym = getSymbol($1);
+            if(sym != NULL){
+                if(checktype(type,sym->type)){
+                    putSymbol(id,type);
+                    $$ = createNode(op);
+                    $$->left = createNode(id);
+                    $$->right = createNode($1);
+                }
+                else{
+                    yyerror("Tipos de datos incompatibles");
+                }
+            }
+            else{
+                yyerror("Variable no declarada");
+            }
+        }
+        | TEXTO {            
+            if(checktype(type,"string")){
+                putSymbol(id,type);
+                $$ = createNode(op);
+                $$->left = createNode(id);
+                $$->right = createNode($1);
+            }
+            else{
+                yyerror("Tipos de datos incompatibles");
+            }
+        }
+        | DECIMAL {            
+            if(checktype(type,"float")){
+                putSymbol(id,type);
+                $$ = createNode(op);
+                $$->left = createNode(id);
+                $$->right = createNode($1);    
+            }
+            else{
+                yyerror("Tipos de datos incompatibles");
+            }
+        }
         ;
-ecuaciones  : ID ASIGNACION valor_ecuaciones OPERADORES_MATEMATICOS valor_ecuaciones 
+ecuaciones  : ID ASIGNACION valor_ecuaciones op_math valor_ecuaciones {}
             ;
-valor_ecuaciones        : NUM
-                        | DECIMAL
-                        | ID
-                        ;
-ciclos  : CICLOWHILE condicion bloque_codigo
-        ;
-bloque_codigo   : LLAVEIZQ inicioaux LLAVEDER
+valor_ecuaciones    : NUM {}
+                    | DECIMAL {}
+                    | ID {}
+                    ;
+cicloswhile : CICLOWHILE condicion bloque_codigo {}
+            ;
+bloque_codigo   : LLAVEIZQ inicioaux LLAVEDER {}
                 ;
-condicion       : valor OPERADORES_RELACIONALES valor
+condicion   : valor op_rel valor {}
+            ;
+imprimirdatos   : DESPLEGAR_CARACTERES valor {}
                 ;
-imprimirdatos   : DESPLEGAR_CARACTERES valor
-                ;
-leerdatos       : ID ENTRADA valor
+leerdatos       : ENTRADA valor {}
                 ;
 %%
 void yyerror(const char* message) {
@@ -108,7 +177,6 @@ int main(int argc, char *argv[]){
     }
     yyin = archivo; // Archivo a escanear
     yyparse();
-    printf("Analisis Sintactico correcto \n");
     fclose(archivo);//Cerradura de archivo
     return 0;
 }

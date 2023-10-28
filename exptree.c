@@ -1,14 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include "exptree.h"
 
+// Structure for symbol table
 typedef struct SymbolTable{
     char* name;
-    int value;
+    char* type;
     struct SymbolTable* next;
 } SymbolTable;
-SymbolTable *head = NULL;
-bool contextcheck(char* name){
+// Structure for a node in the AST
+typedef struct TreeNode {
+    char* data;
+    struct TreeNode* left;
+    struct TreeNode* right;
+} TreeNode;
+//Methods for Symbol Table
+SymbolTable *head = NULL; // Head of the Symbol Table
+bool contextcheck(char* name){ //Check if variable is already declared
     SymbolTable *temp = head;
     while(temp != NULL){
         if(strcmp(temp->name, name) == 0){
@@ -19,57 +29,66 @@ bool contextcheck(char* name){
     }
     return false;
 }
-void insert(char* name, int value){
-    if(contextcheck(name)){
+SymbolTable* getsymbol(char* name){ //Get the variable from the Symbol Table
+    SymbolTable *temp = head;
+    while(temp != NULL){
+        if(strcmp(temp->name, name) == 0){
+            return temp;
+        }
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+bool checktype(char* value, char* type){
+    if(strcmp(value,type) == 0){
+        return true; //If the type of the value is the same as the type of the variable
+    }
+    else{
+        return false; //If the type of the value is not the same as the type of the variable
+    }
+}
+void putSymbol(char* name, char* type){ //Insert variable in the Symbol Table
+    if(contextcheck(name)){ // Check if the variable is already declared
         return;
     }
     else{
         SymbolTable *temp = (SymbolTable*)malloc(sizeof(SymbolTable));
         temp->name = strdup(name);
-        temp->value = value;
+        temp->type = type;
         temp->next = head;
         head = temp;
     }
 }
-int lookup(char* name){
+void print(){ // Print the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){
-        if(strcmp(temp->name, name) == 0){
-            return temp->value;
-        }
-        temp = temp->next;
-    }
-    printf("Variable %s is not declared\n", name);
-    return -1;
-}
-void print(){
-    SymbolTable *temp = head;
-    while(temp != NULL){
-        printf("%s = %d\n", temp->name, temp->value);
+        printf("%s = %d\n", temp->name, temp->type);
         temp = temp->next;
     }
 }
+//Delete a variable from the Symbol Table
 void deleteFromSymbolTable(){
-    SymbolTable *temp = head;
-    head = head->next;
-    free(temp);
+    if(head == NULL){
+        return;
+    }
+    else{
+        SymbolTable *temp = head;
+        head = head->next;
+        free(temp);
+    }
 }
+//Delete the whole Symbol Table
 void deleteSymbolTable(){
     while(head != NULL){
         deleteFromSymbolTable();
     }
 }
-// Estructura para representar un nodo del AST
-typedef struct TreeNode {
-    char* data;
-    struct TreeNode* left;
-    struct TreeNode* right;
-} TreeNode;
 
-// Función para crear un nuevo nodo del AST
+// Create a new node for the AST
 TreeNode* createNode(const char* data) {
-    TreeNode* newNode = (TreeNode*)malloc(sizeof(TreeNode));
-    if (newNode) {
+    TreeNode* newNode = (TreeNode*) malloc(sizeof(TreeNode)); // Allocate memory for the new node
+    if (newNode) {// Initialize the new node
         newNode->data = strdup(data);
         newNode->left = NULL;
         newNode->right = NULL;
@@ -77,23 +96,15 @@ TreeNode* createNode(const char* data) {
     return newNode;
 }
 
-// Función para imprimir el AST en notación de paréntesis
+// Function to print the AST in prefix notation
 void printAST(TreeNode* root) {
     if (root) {
-        printf("(%s", root->data);
-        if (root->left || root->right) {
-            printf(" ");
-            printAST(root->left);
-            if (root->right) {
-                printf(" ");
-                printAST(root->right);
-            }
-        }
-        printf(")");
+        printf("%s ", root->data);
+        printAST(root->left);
+        printAST(root->right);
     }
 }
-
-// Función para liberar la memoria utilizada por el AST
+// Function to free the memory of the AST
 void freeAST(TreeNode* root) {
     if (root) {
         freeAST(root->left);
@@ -103,20 +114,3 @@ void freeAST(TreeNode* root) {
     }
 }
 
-int main() {
-    // Construir un ejemplo de AST
-    TreeNode* root = createNode("+");
-    root->left = createNode("a");
-    root->right = createNode("*");
-    root->right->left = createNode("b");
-    root->right->right = createNode("c");
-
-    // Imprimir el AST
-    printAST(root);
-    printf("\n");
-
-    // Liberar la memoria del AST
-    freeAST(root);
-
-    return 0;
-}

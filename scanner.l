@@ -1,55 +1,56 @@
 %{
 #include "parser.tab.h"
-
+int line_count;
 %}
 
 %option reentrant bison-bridge noyywrap
 
+//Structure for the tokens
 id     [a-zA-Z][a-zA-Z_0-9]*
 float  [0-9]+\.[0-9]+
 int    [0-9]+
 string \"[^\"\n]*\"
 
+
 %%  
-\}	 {return (RBRACK);}
-\{ {return (LBRACK);}
-\,   {return (COMMA);}
-\;  {return (SEMICOLON);}
-\+   { yylval->OPERADORES_MATEMATICOS = yytext;return (OPERADORES_MATEMATICOS);}
-\-   {yylval->OPERADORES_MATEMATICOS = yytext; return (OPERADORES_MATEMATICOS);}
-\*   {yylval->OPERADORES_MATEMATICOS = yytext; return (OPERADORES_MATEMATICOS);}
-\/   {yylval->OPERADORES_MATEMATICOS = yytext; return (OPERADORES_MATEMATICOS);}
-\^   {yylval->OPERADORES_MATEMATICOS = yytext; return (OPERADORES_MATEMATICOS);}
-\%	 {yylval->OPERADORES_MATEMATICOS = yytext; return (OPERADORES_MATEMATICOS);}
+\}          {return (RBRACK);}
+\{          {return (LBRACK);}
+\;          {return (SEMICOLON);}
+\(          {return (LPAR);}
+\)          {return (RPAR);}
+\+          { yylval->op_math = yytext;return (OP_MATH);}
+\-          {yylval->op_math = yytext; return (OP_MATH);}
+\*          {yylval->op_math = yytext; return (OP_MATH);}
+\/          {yylval->op_math = yytext; return (OP_MATH);}
+\^          {yylval->op_math = yytext; return (OP_MATH);}
+\%	        {yylval->op_math = yytext; return (OP_MATH);}
 
-\== {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
-\!= {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
-\< {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
-\> {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
-\<\= {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
-\>\= {yylval->OPERADORES_RELACIONALES = yytext; return (OPERADORES_RELACIONALES);}
+\==         {yylval->op_rel = yytext; return (OP_REL);}
+\!=         {yylval->op_rel = yytext; return (OP_REL);}
+\<          {yylval->op_rel = yytext; return (OP_REL);}
+\>          {yylval->op_rel = yytext; return (OP_REL);}
+\<\=        {yylval->op_rel = yytext; return (OP_REL);}
+\>\=        {yylval->op_rel = yytext; return (OP_REL);}
 
-\=	 {return (ASSIGN);}
+\=	        {return (ASSIGN);}
 
-while	 {return (WHILE);}
-write	 {return (WRITE);}
-read	 {return (READ);}
-if	    {return (IF);}
+while	    {return (WHILE);}
+write	    {return (WRITE);}
+read	    {return (READ);}
+if	        {return (IF);}
 
-string  {yylval->TYPE = yytext; return (TIPO_DATO);}
-int     {yylval->TYPE = yytext;return (TIPO_DATO);}
-float	 {yylval->TYPE = yytext;return (TIPO_DATO);}
+string      {yylval->type = yytext; return (TIPO_DATO);}
+int         {yylval->type = yytext;return (TIPO_DATO);}
+float	    {yylval->type = yytext;return (TIPO_DATO);}
 
-\(        return LPAR;
-\)        return RPAR;
 
-{int}      { yylval->ival = atol(yytext); return NUM; }
 
-{id}       { yylval->sval = yytext; return ID; }
-{string}   { yylval->sval = yytext; return TEXTO; }
+{int}       { yylval->ival = atol(yytext); return NUM; }
+{id}        { yylval->sval = yytext; return ID; }
+{string}    { yylval->sval = yytext; return TEXTO; }
 {float}     {yylval-> fval = atof(yytext); return DECIMAL;}
 
-\n {}
-[ \t]+ {/*ignore*/}
-<<EOF>>    return TOK_EOF;
+\n {line_count++;}
+[ \t]+      {/*ignore*/}
+<<EOF>>     {return (TOK_EOF);}
 %%
