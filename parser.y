@@ -145,10 +145,17 @@ valor   : NUM {
                 yyerror("Tipos de datos incompatibles");
             }
         }
+        | ecuaciones
         ;
-ecuaciones  : ID ASIGNACION valor_ecuaciones op_math valor_ecuaciones {}
+ecuaciones  : valor_ecuaciones op_math valor_ecuaciones {
+                char* opmath = $2;
+                char* valor1=$1;
+                char* valor2=$3;
+            }
             ;
-valor_ecuaciones    : NUM {}
+valor_ecuaciones    : NUM {
+                        
+                    }
                     | DECIMAL {}
                     | ID {}
                     ;
