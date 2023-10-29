@@ -16,22 +16,20 @@ extern int line_count;
       char* sval;
       float fval;
       char* type;
-      OP_REL op_rel;
-      OP_MATH op_math;
       struct TreeNode* node;
 }
 %token LLAVEDER
 %token LLAVEIZQ
 %token LPAR
 %token RPAR
-%token ASIGNACION
 %token CICLOWHILE
 %token DESPLEGAR_CARACTERES
 %token ENTRADA
 %token IF_CONDICIONAL
 %token TOK_EOF
-%token <op_math> OP_MATH
-%token <op_rel> OP_REL
+%token ASIGNACION
+%token OP_MATH
+%token OP_REL
 %token <type> TIPO_DATO
 %token <ival> NUM
 %token <fval> DECIMAL
@@ -60,7 +58,7 @@ extern int line_count;
 %%
 instrucciones   : instruccion inicioaux {printf("Instruccion\n");}
                 ;
-inicioaux   : 
+inicioaux   : TOK_EOF {printf("Fin de archivo\n");}
             | instrucciones {printf("Instrucciones\n");}
             ;
 instruccion : defvar {printf("Definicion de variable\n");}
@@ -93,7 +91,6 @@ defvar  : TIPO_DATO ID asignavalor {
 asignavalor : ASIGNACION valor {
                 char* op = $1;
             }
-            | 
             ; 
 valor   : NUM { 
             if(checktype(type,"int")){
@@ -147,17 +144,27 @@ valor   : NUM {
         }
         | ecuaciones
         ;
-ecuaciones  : valor_ecuaciones op_math valor_ecuaciones {
+ecuaciones  : valor_ecuaciones OP_MATH valor_ecuaciones {
                 char* opmath = $2;
-                char* valor1=$1;
-                char* valor2=$3;
+                if($1.type==$3.type){
+                    $$ = createNode(opmath);
+                    $$->left = $1;
+                    $$->right = $3;
+                }
+                else{
+                    yyerror("Tipos de datos incompatibles");
+                }
             }
             ;
 valor_ecuaciones    : NUM {
-                        
+                        $$ = $1;
                     }
-                    | DECIMAL {}
-                    | ID {}
+                    | DECIMAL {
+                        $$ = $1;
+                    }
+                    | ID {
+                        $$ = $1;
+                    }
                     ;
 cicloswhile : CICLOWHILE condicion bloque_codigo {}
             ;

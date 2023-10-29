@@ -5,7 +5,7 @@ int line_count;
 
 %option reentrant bison-bridge noyywrap
 
-//Structure for the tokens
+/*Structure for the tokens*/
 id     [a-zA-Z][a-zA-Z_0-9]*
 float  [0-9]+\.[0-9]+
 int    [0-9]+
