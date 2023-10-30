@@ -5,7 +5,6 @@
 #include "exptree.h"
 
 //Methods for Symbol Table
-SymbolTable* head = NULL; // Head of the Symbol Table
 SymbolTable* getSymbol(char* name){ //Get the variable from the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){
@@ -57,7 +56,6 @@ void deleteSymbolTable(){
         deleteFromSymbolTable();
     }
 }
-TreeNode* root = NULL; // Root of the AST
 // Create a new node for the AST without Type
 TreeNode* createNode(char* data) {
     TreeNode* newNode = (TreeNode*) malloc(sizeof(TreeNode)); // Allocate memory for the new node

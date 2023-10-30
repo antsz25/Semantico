@@ -7,8 +7,8 @@ int yylex();
 extern FILE* yyin;
 extern char* yytext;
 extern int line_count;
-extern SymbolTable* head;
-extern TreeNode* root;
+SymbolTable* head;
+TreeNode* root;
 %}
 /*Simbolos Terminales*/
 %union{
@@ -63,18 +63,28 @@ extern TreeNode* root;
 %start root
 %%
 root :  instrucciones {
-            $$ = createNode("root"); 
-            $$->type = "void";
-            $$->left = $1; 
-            $$->right = NULL;
-            root = $$;
+            if($1 != NULL){
+                $$ = createNode("root"); 
+                $$->type = "void";
+                $$->left = $1; 
+                $$->right = NULL;
+                root = $$;
+            }
+            else{
+                yyerror("Instrucciones nulas");
+            }
         }
         ;
 instrucciones   : instruccion inicioaux {
-                    $$ = createNode("Instrucciones");
-                    $$->type = "void";
-                    $$->left = $1;
-                    $$->right = $2;         
+                    if($1 != NULL && $2 != NULL){
+                        $$ = createNode("Instrucciones");
+                        $$->type = "void";
+                        $$->left = $1;
+                        $$->right = $2;         
+                    }
+                    else{
+                        yyerror("Instrucciones nulas");
+                    }
                 }
                 ;
 inicioaux   : TOK_EOF {
@@ -83,21 +93,35 @@ inicioaux   : TOK_EOF {
                     printAST(root);
                 }
                 else{
-                    printf("Arbol vacio\n");
+                    yyerror("Arbol vacio\n");
                 }
             }
             | instrucciones {
-                printf("Instrucciones\n");
-                $$ = $1;
+                if($1 != NULL){
+                    printf("Instrucciones\n");
+                    $$ = $1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
             }
             ;
 instruccion : defvar {
-                printf("Definicion de variable\n");
-                $$=$1;
+                if($1 != NULL){ 
+                    $$=$1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
             }
             | cicloswhile {
-                printf("Ciclo While\n");
-                $$=$1;
+                if($1 != NULL){
+                    printf("Ciclo While\n");
+                    $$=$1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
             }
             | pregunton {printf("Pregunton\n");}
             | imprimirdatos {printf("Imprimir datos\n");}
@@ -113,30 +137,42 @@ defvar  : TIPO_DATO ID asignavalor {
             else{
                 putSymbol($2,$1);
                 head = getSymbol($2);
-                if(head->type == $3->right->type){
-                    $$ = $3;
-                    $$->type = head->type;
-                    $$->left = createNode($2);
-                    $$->left->type = head->type;
-                    $$->right = $3->right;
+                if(head != NULL){
+                    if(strcmp(head->type,$3->right->type)){
+                        $$ = $3;
+                        $$->type = head->type;
+                        $$->left = createNode($2);
+                        $$->left->type = head->type;
+                        $$->right = $3->right;
+                        printf("Definicion de variable: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                    }
+                    else{
+                        yyerror("Tipos de datos incompatibles en asignacion");
+                    }
                 }
                 else{
-                    yyerror("Tipos de datos incompatibles en asignacion");
+                    yyerror("Error en definicion de variable");
                 }
             }
         }
         | ID asignavalor {
             head = getSymbol($1);
             if(head != NULL){
-                if(head->type == $2->right->type){
-                    $$ = $2;
-                    $$->type = head->type;
-                    $$->left = createNode($1);
-                    $$->left->type = head->type;
-                    $$->right = $2->right;
+                if(head->type !=NULL && $2->right->type !=NULL){
+                    if(strcmp(head->type,$2->right->type)){
+                        $$ = $2;
+                        $$->type = head->type;
+                        $$->left = createNode($1);
+                        $$->left->type = head->type;
+                        $$->right = $2->right;
+                        printf("Asignacion de variable: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                    }
+                    else{
+                        yyerror("Tipos de datos incompatibles en asignacion");
+                    }
                 }
                 else{
-                    yyerror("Tipos de datos incompatibles en asignacion");
+                    yyerror("Valores nulos en asignacion");
                 }
             }
             else{
@@ -145,18 +181,28 @@ defvar  : TIPO_DATO ID asignavalor {
         }
         ;
 asignavalor : ASSIGN valor {
-                $$ = createNode($1);
-                $$->right = $2;
+                if($2 != NULL){
+                    $$ = createNode($1);
+                    $$->right = $2;
+                }
+                else{
+                    yyerror("Valor nulo");
+                }
             }
             ; 
 valor   : NUM { 
             char typestr[20];
             sprintf(typestr, "%d", $1);
+            if(typestr!=NULL){
             $$=createNode(typestr);
             $$->type = "int";
+            }
+            else{
+                printf("Valor nulo\n");
+                yyerror("Valor nulo");
+            }
         }
         | ID {            
-            printf("ID: %s\n",$1);
             head = getSymbol($1);
             if(head != NULL){
                 $$ = createNode($1);
@@ -167,47 +213,74 @@ valor   : NUM {
             }
         }
         | TEXTO {            
-            $$ = createNode($1);
-            $$->type = "string";
+            if($1!=NULL){
+                $$ = createNode($1);
+                $$->type = "string";
+            }
         }
         | DECIMAL {            
             char typestr[20];
             sprintf(typestr, "%.2f", $1);
-            $$=createNode(typestr);
-            $$->type = "float";
+            if(typestr!=NULL){
+                $$=createNode(typestr);
+                $$->type = "float";
+            }
+            else{
+                printf("Valor nulo\n");
+                yyerror("Valor nulo");
+            }
         }
         | ecuaciones {
-            $$ = $1;
-            $$->type = $1->type;
+            if($1 != NULL){
+                $$ = $1;
+                $$->type = $1->type;
+            }
+            else{
+                yyerror("Valor nulo");
+            }
         }
         ;
 ecuaciones  : valor_ecuaciones OP_MATH valor_ecuaciones {
-                if($1->type == $3->type || 
-                    $1->type == "float" && $3->type == "int" || 
-                    $1->type == "int" && $3->type == "float")
-                    {
-                    $$ = createNode($2);
-                    $$->type = $1->type;
-                    $$->left = $1;
-                    $$->right = $3;
-                    printf("Ecuacion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
-                }
-                else{
-                    yyerror("Tipos de datos incompatibles en ecuacion");
+                if($1 != NULL && $3 != NULL){
+                    if((strcmp($1->type,$3->type)) || 
+                        (strcmp($1->type, "float") && strcmp($3->type, "int")) || 
+                        (strcmp($1->type,"int") && strcmp($3->type,"float")))
+                        {
+                        $$ = createNode($2);
+                        $$->type = $1->type;
+                        $$->left = $1;
+                        $$->right = $3;
+                        printf("Ecuacion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                    }
+                    else{
+                        yyerror("Tipos de datos incompatibles en ecuacion");
+                    }
                 }
             }
             ;
 valor_ecuaciones    : NUM {
                         char typestr[20];
                         sprintf(typestr, "%d", $1);
-                        $$=createNode(typestr);
-                        $$->type = "int";
+                        if(typestr!=NULL){
+                            $$=createNode(typestr);
+                            $$->type = "int";
+                        }
+                        else{
+                            printf("Valor nulo\n");
+                            yyerror("Valor nulo");
+                        }
                     }
                     | DECIMAL {
                         char typestr[20];
                         sprintf(typestr, "%.2f", $1);
-                        $$=createNode(typestr);
-                        $$->type = "float";
+                        if(typestr!=NULL){
+                            $$=createNode(typestr);
+                            $$->type = "float";
+                        }
+                        else{
+                            printf("Valor nulo\n");
+                            yyerror("Valor nulo");
+                        }
                     }
                     | ID {
                         head = getSymbol($1);
@@ -221,31 +294,42 @@ valor_ecuaciones    : NUM {
                     }
                     ;
 cicloswhile : WHILE condicion bloque_codigo {
-                $$ = createNode($1);
-                $$->type = "void";
-                $$->left = $2;
-                $$->right = $3;
-                printf("Ciclo While: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                if($2 != NULL && $3 != NULL){
+                    $$ = createNode($1);
+                    $$->type = "void";
+                    $$->left = $2;
+                    $$->right = $3;
+                    printf("Ciclo While: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                }
             }
             ;
 bloque_codigo   : LBRACK inicioaux RBRACK {
-                    $$ = $2;
+                    if($2 != NULL){
+                        $$ = $2;
+                    }
+
                 }
                 ;
 condicion   : valor OP_REL valor {
-                if($1->type == $3->type || 
-                    $1->type == "float" && $3->type == "int" || 
-                    $1->type == "int" && $3->type == "float")
-                    {
-                    $$ = createNode($2);
-                    $$->type = "bool";
-                    $$->left = $1;
-                    $$->right = $3;
-                    printf("Condicion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                if($1 != NULL && $3 != NULL){
+                    if((strcmp($1->type,$3->type)) || 
+                        (strcmp($1->type, "float") && strcmp($3->type, "int")) || 
+                        (strcmp($1->type,"int") && strcmp($3->type,"float")))
+                        {
+                        $$ = createNode($2);
+                        $$->type = "bool";
+                        $$->left = $1;
+                        $$->right = $3;
+                        printf("Condicion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                    }
+                    else{
+                        yyerror("Tipos de datos incompatibles en condicion");
+                    }
                 }
                 else{
-                    yyerror("Tipos de datos incompatibles en condicion");
+                    yyerror("Error en condicion");
                 }
+
             }
             ;
 imprimirdatos   : WRITE valor {}
@@ -253,11 +337,10 @@ imprimirdatos   : WRITE valor {}
 leerdatos       : READ valor {}
                 ;
 %%
-void yyerror(const char* message) {
-    fprintf(stderr, "Error en la línea %d: %s -> %s\n", line_count, message, yytext);
-    exit(1);
-}
 int main(int argc, char *argv[]){
+    head = NULL;
+    root = createNode("root");
+    root->type = "void";
     if (argc < 2) { //Utilizacion de archivo de entrada
         printf("Uso: %s archivo_de_entrada\n", argv[0]);
     }
@@ -266,8 +349,13 @@ int main(int argc, char *argv[]){
         printf("Error: no se pudo abrir el archivo de entrada.\n");
         return 1;
     }
+
     yyin = archivo; // Archivo a escanear
     yyparse();
     fclose(archivo);//Cerradura de archivo
     return 0;
+}
+void yyerror(const char* message) {
+    fprintf(stderr, "Error en la línea %d: %s -> %s\n", line_count, message, yytext);
+    exit(1);
 }

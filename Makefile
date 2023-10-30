@@ -34,7 +34,7 @@ $(LEX_C): $(LEX_FILE)
 	$(FLEX) $<
 
 $(YACC_C) $(YACC_H): $(YACC_FILE)
-	$(BISON) -vd $<
+	$(BISON) -v -d $<
 
 valgrind: $(TARGET)
 	$(VALGRIND) --leak-check=full -s --show-leak-kinds=all ./$(TARGET) input.txt
