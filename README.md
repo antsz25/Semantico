@@ -1,9 +1,9 @@
 # Lex/bison parser
 Para correr el codigo, necesitas tener instalados los siguientes programas:
-> Compilador GCC
-> Flex Language
-> Bison Language
-> Valgrind
+> Compilador GCC \n
+> Flex Language \n
+> Bison Language \n
+> Valgrind \n
 
 Utiliza el comando:
 ```
