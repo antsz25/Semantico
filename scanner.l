@@ -1,15 +1,15 @@
 %{
 #include "parser.tab.h"
-int line_count;
+int line_count = 1;
 %}
 
 %option bison-bridge noyywrap
 
 /*Structure for the tokens*/
 id     [a-zA-Z][a-zA-Z_0-9]*
-float  [0-9]+\.[0-9]+
-int    [0-9]+
-string \"[^\"\n]*\"
+typefloat  [0-9]+\.[0-9]+
+typeint    [0-9]+
+typestring \"[^\"\n]*\"
 
 
 %%  
@@ -39,15 +39,13 @@ read	    {return (READ);}
 if	        {return (IF);}
 
 string      {yylval->type = yytext; return (TIPO_DATO);}
-int         {yylval->type = yytext;return (TIPO_DATO);}
+int         {yylval->type = yytext; printf(yytext);return (TIPO_DATO);}
 float	    {yylval->type = yytext;return (TIPO_DATO);}
 
-
-
-{int}       { yylval->ival = atol(yytext); return NUM; }
+{typeint}       { yylval->ival = atol(yytext); return NUM; }
 {id}        { yylval->sval = yytext; return ID; }
-{string}    { yylval->sval = yytext; return TEXTO; }
-{float}     {yylval-> fval = atof(yytext); return DECIMAL;}
+{typestring}    { yylval->sval = yytext; return TEXTO; }
+{typefloat}     {yylval-> fval = atof(yytext); return DECIMAL;}
 
 \n {line_count++;}
 [ \t]+      {/*ignore*/}

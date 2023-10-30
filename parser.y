@@ -20,17 +20,18 @@ extern TreeNode* root;
       char* op_math;
       char* op_rel;
       char* ASSIGN;
+      char* WHILE;
       struct TreeNode* node;
 }
 %token RBRACK
 %token LBRACK
 %token LPAR
 %token RPAR
-%token WHILE
 %token WRITE
 %token READ
 %token IF
 %token TOK_EOF
+%token <WHILE> WHILE
 %token <ASSIGN> ASSIGN
 %token <op_math> OP_MATH
 %token <op_rel> OP_REL
@@ -78,16 +79,26 @@ instrucciones   : instruccion inicioaux {
                 ;
 inicioaux   : TOK_EOF {
                 printf("Fin de archivo\n");
-                printAST(root);
+                if(root != NULL){
+                    printAST(root);
+                }
+                else{
+                    printf("Arbol vacio\n");
+                }
             }
             | instrucciones {
                 printf("Instrucciones\n");
                 $$ = $1;
             }
             ;
-instruccion : defvar {printf("Definicion de variable\n");}
-            | ecuaciones {printf("Ecuaciones\n");}
-            | cicloswhile {printf("Ciclo While\n");}
+instruccion : defvar {
+                printf("Definicion de variable\n");
+                $$=$1;
+            }
+            | cicloswhile {
+                printf("Ciclo While\n");
+                $$=$1;
+            }
             | pregunton {printf("Pregunton\n");}
             | imprimirdatos {printf("Imprimir datos\n");}
             | leerdatos {printf("Leer datos\n");}
@@ -145,6 +156,7 @@ valor   : NUM {
             $$->type = "int";
         }
         | ID {            
+            printf("ID: %s\n",$1);
             head = getSymbol($1);
             if(head != NULL){
                 $$ = createNode($1);
@@ -208,11 +220,33 @@ valor_ecuaciones    : NUM {
                         }
                     }
                     ;
-cicloswhile : WHILE condicion bloque_codigo {}
+cicloswhile : WHILE condicion bloque_codigo {
+                $$ = createNode($1);
+                $$->type = "void";
+                $$->left = $2;
+                $$->right = $3;
+                printf("Ciclo While: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+            }
             ;
-bloque_codigo   : LBRACK inicioaux RBRACK {}
+bloque_codigo   : LBRACK inicioaux RBRACK {
+                    $$ = $2;
+                }
                 ;
-condicion   : valor OP_REL valor {}
+condicion   : valor OP_REL valor {
+                if($1->type == $3->type || 
+                    $1->type == "float" && $3->type == "int" || 
+                    $1->type == "int" && $3->type == "float")
+                    {
+                    $$ = createNode($2);
+                    $$->type = "bool";
+                    $$->left = $1;
+                    $$->right = $3;
+                    printf("Condicion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+                }
+                else{
+                    yyerror("Tipos de datos incompatibles en condicion");
+                }
+            }
             ;
 imprimirdatos   : WRITE valor {}
                 ;
@@ -221,6 +255,7 @@ leerdatos       : READ valor {}
 %%
 void yyerror(const char* message) {
     fprintf(stderr, "Error en la línea %d: %s -> %s\n", line_count, message, yytext);
+    exit(1);
 }
 int main(int argc, char *argv[]){
     if (argc < 2) { //Utilizacion de archivo de entrada

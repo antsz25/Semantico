@@ -1,32 +1,45 @@
+# Nombre del ejecutable
+TARGET = run
+
+# Compilador
 CC = gcc
-CFLAGS = -Wall -g
-LEX = flex
-YACC = bison
-YFLAGS = -d
 
-# List of source files
-SRCS = lexer.l parser.y main.c
+# Opciones del compilador
+CFLAGS = -Wall
 
-# Generate corresponding object file names
-OBJS = $(SRCS:.c=.o)
-OBJS := $(OBJS:.l=.c)
-OBJS := $(OBJS:.y=.c)
+# Fuentes
+LEX_FILE = scanner.l
+YACC_FILE = parser.y
+EXPTREE_FILE = exptree.c
 
-# The final executable
-TARGET = my_compiler
+# Objetos generados
+LEX_C = lex.yy.c
+YACC_C = parser.tab.c
+YACC_H = parser.tab.h
+
+# Bibliotecas necesarias para Flex
+FLEX_LIB = -lfl
+
+# Comandos
+FLEX = flex
+BISON = bison
+VALGRIND = valgrind
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ -ll -ly
+$(TARGET): $(LEX_C) $(YACC_C) $(EXPTREE_FILE)
+	$(CC) $(CFLAGS) -o $@ $(LEX_C) $(YACC_C) $(EXPTREE_FILE) $(FLEX_LIB)
 
-%.c: lexer.l
-	$(LEX) -o $@ $<
+$(LEX_C): $(LEX_FILE)
+	$(FLEX) $<
 
-%.c: parser.y
-	$(YACC) $(YFLAGS) -o $@ $<
+$(YACC_C) $(YACC_H): $(YACC_FILE)
+	$(BISON) -vd $<
+
+valgrind: $(TARGET)
+	$(VALGRIND) --leak-check=full -s --show-leak-kinds=all ./$(TARGET) input.txt
 
 clean:
-	rm -f $(OBJS) $(TARGET) lex.yy.c y.tab.c y.tab.h
+	rm -f $(TARGET) $(LEX_C) $(YACC_C) $(YACC_H)
 
-.PHONY: all clean
+.PHONY: all valgrind clean
