@@ -13,6 +13,7 @@ typedef struct SymbolTable{
 // Structure for a node in the AST
 typedef struct TreeNode {
     char* data;
+    char* type;
     struct TreeNode* left;
     struct TreeNode* right;
 } TreeNode;
@@ -86,7 +87,7 @@ void deleteSymbolTable(){
 }
 
 // Create a new node for the AST
-TreeNode* createNode(const char* data) {
+TreeNode* createNode(char* data, char* type) {
     TreeNode* newNode = (TreeNode*) malloc(sizeof(TreeNode)); // Allocate memory for the new node
     if (newNode) {// Initialize the new node
         newNode->data = strdup(data);
@@ -100,6 +101,7 @@ TreeNode* createNode(const char* data) {
 void printAST(TreeNode* root) {
     if (root) {
         printf("%s ", root->data);
+        printf("%s ", root->type);
         printAST(root->left);
         printAST(root->right);
     }
@@ -110,6 +112,7 @@ void freeAST(TreeNode* root) {
         freeAST(root->left);
         freeAST(root->right);
         free(root->data);
+        free(root->type);
         free(root);
     }
 }

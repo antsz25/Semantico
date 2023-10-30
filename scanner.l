@@ -15,7 +15,6 @@ string \"[^\"\n]*\"
 %%  
 \}          {return (RBRACK);}
 \{          {return (LBRACK);}
-\;          {return (SEMICOLON);}
 \(          {return (LPAR);}
 \)          {return (RPAR);}
 \+          { yylval->op_math = yytext;return (OP_MATH);}

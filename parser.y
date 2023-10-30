@@ -1,13 +1,14 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "exptree.c"
 #include "exptree.h"	
 void yyerror(const char* message);
 int yylex();
 extern FILE* yyin;
 extern char* yytext;
 extern int line_count;
+extern SymbolTable *symbolTable;
+symbolTable* = NULL;
 %}
 /*Simbolos Terminales*/
 %union{
@@ -16,20 +17,23 @@ extern int line_count;
       char* sval;
       float fval;
       char* type;
+      char* op_math;
+      char* op_rel;
+      char* ASSIGN;
       struct TreeNode* node;
 }
-%token LLAVEDER
-%token LLAVEIZQ
+%token RBRACK
+%token LBRACK
 %token LPAR
 %token RPAR
-%token CICLOWHILE
-%token DESPLEGAR_CARACTERES
-%token ENTRADA
-%token IF_CONDICIONAL
+%token WHILE
+%token WRITE
+%token READ
+%token IF
 %token TOK_EOF
-%token ASIGNACION
-%token OP_MATH
-%token OP_REL
+%token <ASSIGN> ASSIGN
+%token <op_math> OP_MATH
+%token <op_rel> OP_REL
 %token <type> TIPO_DATO
 %token <ival> NUM
 %token <fval> DECIMAL
@@ -38,13 +42,13 @@ extern int line_count;
 %left op_math
 %left op_rel
 
-%type <node> valor
 %type <node> instruccion
 %type <node> bloque_codigo
 %type <node> ecuaciones
 %type <node> defvar
 %type <node> inicioaux
 %type <node> valor_ecuaciones
+%type <node> valor
 %type <node> condicion
 %type <node> instrucciones
 %type <node> pregunton
@@ -68,12 +72,11 @@ instruccion : defvar {printf("Definicion de variable\n");}
             | imprimirdatos {printf("Imprimir datos\n");}
             | leerdatos {printf("Leer datos\n");}
             ;
-pregunton   : IF_CONDICIONAL condicion bloque_codigo {}
+pregunton   : IF condicion bloque_codigo {}
             ;
 defvar  : TIPO_DATO ID asignavalor {
             if(!contextcheck($2)){
-                char* type = $1;
-                char* id = $2;
+
             }
             else{
                 yyerror("Variable ya declarada");
@@ -84,97 +87,79 @@ defvar  : TIPO_DATO ID asignavalor {
                 yyerror("Variable no declarada");
             }
             else{
-                char* id = $1;
+
             }
-        }
+        }//Me quede AQUÍ
         ;
-asignavalor : ASIGNACION valor {
-                char* op = $1;
+asignavalor : ASSIGN valor {
+                $$ = createNode($1);
+                $$->right = createNode($2);
             }
             ; 
 valor   : NUM { 
-            if(checktype(type,"int")){
-                putSymbol(id,type);
-                $$ = createNode(op);
-                $$->left = createNode(id);
-                $$->right = createNode($1);
-            }
-            else{
-                yyerror("Tipos de datos incompatibles");
-            }
+            $$ = createNode($1);
+            $$->type = "int";
         }
         | ID {            
-            Symboltable* sym = getSymbol($1);
-            if(sym != NULL){
-                if(checktype(type,sym->type)){
-                    putSymbol(id,type);
-                    $$ = createNode(op);
-                    $$->left = createNode(id);
-                    $$->right = createNode($1);
-                }
-                else{
-                    yyerror("Tipos de datos incompatibles");
-                }
+            symboltable = getSymbol($1);
+            if(symboltable != NULL){
+                $$ = createNode($1);
+                $$->type = symboltable->type;
             }
             else{
                 yyerror("Variable no declarada");
             }
         }
         | TEXTO {            
-            if(checktype(type,"string")){
-                putSymbol(id,type);
-                $$ = createNode(op);
-                $$->left = createNode(id);
-                $$->right = createNode($1);
-            }
-            else{
-                yyerror("Tipos de datos incompatibles");
-            }
+            $$ = createNode($1);
+            $$->type = "string";
         }
         | DECIMAL {            
-            if(checktype(type,"float")){
-                putSymbol(id,type);
-                $$ = createNode(op);
-                $$->left = createNode(id);
-                $$->right = createNode($1);    
-            }
-            else{
-                yyerror("Tipos de datos incompatibles");
-            }
+            $$ = createNode($1);
+            $$->type = "float";
         }
         | ecuaciones
         ;
 ecuaciones  : valor_ecuaciones OP_MATH valor_ecuaciones {
-                char* opmath = $2;
-                if($1.type==$3.type){
-                    $$ = createNode(opmath);
-                    $$->left = $1;
-                    $$->right = $3;
+                if($1->type == $3->type){
+                    $$ = createNode($2);
+                    $$->left = createNode($1);
+                    $$->right = createNode($3);
+                    print("Ecuacion: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->value,$$->left->value,$$->right->value);
                 }
                 else{
-                    yyerror("Tipos de datos incompatibles");
+                    yyerror("Tipos de datos incompatibles en ecuacion");
                 }
             }
             ;
 valor_ecuaciones    : NUM {
-                        $$ = $1;
+                        $$=createNode($1);
+                        $$->type = "int";
                     }
                     | DECIMAL {
-                        $$ = $1;
+                        $$=createNode($1);
+                        $$->type = "float";
                     }
                     | ID {
-                        $$ = $1;
+                        symboltable = getSymbol($1);
+                        if(symboltable != NULL){
+                            $$=createNode($1);
+                            $$->type = symboltable->type;
+                        }
+                        else{
+                            yyerror("Variable no declarada");
+                        }
                     }
                     ;
-cicloswhile : CICLOWHILE condicion bloque_codigo {}
+cicloswhile : WHILE condicion bloque_codigo {}
             ;
-bloque_codigo   : LLAVEIZQ inicioaux LLAVEDER {}
+bloque_codigo   : LBRACK inicioaux RBRACK {}
                 ;
 condicion   : valor op_rel valor {}
             ;
-imprimirdatos   : DESPLEGAR_CARACTERES valor {}
+imprimirdatos   : WRITE valor {}
                 ;
-leerdatos       : ENTRADA valor {}
+leerdatos       : READ valor {}
                 ;
 %%
 void yyerror(const char* message) {
