@@ -23,7 +23,6 @@
 
     // Methods for Symbol Table
     extern SymbolTable *head; // Head of the Symbol Table
-    bool contextcheck(char* name);
     SymbolTable* getsymbol(char* name);
     bool checktype(char* value, char* type);
     void putSymbol(char* name, char* type);

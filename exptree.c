@@ -19,17 +19,6 @@ typedef struct TreeNode {
 } TreeNode;
 //Methods for Symbol Table
 SymbolTable *head = NULL; // Head of the Symbol Table
-bool contextcheck(char* name){ //Check if variable is already declared
-    SymbolTable *temp = head;
-    while(temp != NULL){
-        if(strcmp(temp->name, name) == 0){
-            printf("Variable %s is already declared\n", name);
-            return true;
-        }
-        temp = temp->next;
-    }
-    return false;
-}
 SymbolTable* getsymbol(char* name){ //Get the variable from the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){

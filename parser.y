@@ -60,10 +60,20 @@ symbolTable* = NULL;
 /*Simbolos no terminales*/
 %start instrucciones
 %%
-instrucciones   : instruccion inicioaux {printf("Instruccion\n");}
+instrucciones   : instruccion inicioaux {
+                    $$ = createNode("Instrucciones"); 
+                    $$->left = $1; 
+                    $$->right = $2;
+                }
                 ;
-inicioaux   : TOK_EOF {printf("Fin de archivo\n");}
-            | instrucciones {printf("Instrucciones\n");}
+inicioaux   : TOK_EOF {
+                printf("Fin de archivo\n");
+                $$ = createNode($1);
+            }
+            | instrucciones {
+                printf("Instrucciones\n");
+                $$ = createNode($1);
+            }
             ;
 instruccion : defvar {printf("Definicion de variable\n");}
             | ecuaciones {printf("Ecuaciones\n");}
@@ -75,7 +85,8 @@ instruccion : defvar {printf("Definicion de variable\n");}
 pregunton   : IF condicion bloque_codigo {}
             ;
 defvar  : TIPO_DATO ID asignavalor {
-            if(!contextcheck($2)){
+            symboltable = getSymbol($2);
+            if(symboltable != NULL){
 
             }
             else{
@@ -83,13 +94,14 @@ defvar  : TIPO_DATO ID asignavalor {
             }
         }
         | ID asignavalor {
-            if(!contextcheck($1)){
+            symboltable = getSymbol($2);
+            if(symboltable != NULL){
                 yyerror("Variable no declarada");
             }
             else{
 
             }
-        }//Me quede AQUÍ
+        }
         ;
 asignavalor : ASSIGN valor {
                 $$ = createNode($1);
