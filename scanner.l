@@ -3,7 +3,7 @@
 int line_count;
 %}
 
-%option reentrant bison-bridge noyywrap
+%option bison-bridge noyywrap
 
 /*Structure for the tokens*/
 id     [a-zA-Z][a-zA-Z_0-9]*

@@ -4,22 +4,9 @@
 #include <stdbool.h>
 #include "exptree.h"
 
-// Structure for symbol table
-typedef struct SymbolTable{
-    char* name;
-    char* type;
-    struct SymbolTable* next;
-} SymbolTable;
-// Structure for a node in the AST
-typedef struct TreeNode {
-    char* data;
-    char* type;
-    struct TreeNode* left;
-    struct TreeNode* right;
-} TreeNode;
 //Methods for Symbol Table
-SymbolTable *head = NULL; // Head of the Symbol Table
-SymbolTable* getsymbol(char* name){ //Get the variable from the Symbol Table
+SymbolTable* head = NULL; // Head of the Symbol Table
+SymbolTable* getSymbol(char* name){ //Get the variable from the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){
         if(strcmp(temp->name, name) == 0){
@@ -29,31 +16,27 @@ SymbolTable* getsymbol(char* name){ //Get the variable from the Symbol Table
     }
     return NULL;
 }
-
-bool checktype(char* value, char* type){
-    if(strcmp(value,type) == 0){
-        return true; //If the type of the value is the same as the type of the variable
-    }
-    else{
-        return false; //If the type of the value is not the same as the type of the variable
-    }
-}
 void putSymbol(char* name, char* type){ //Insert variable in the Symbol Table
-    if(contextcheck(name)){ // Check if the variable is already declared
+    SymbolTable *temp = head;
+    temp = getSymbol(name);
+    if(temp != NULL){ // Check if the variable is already declared
         return;
     }
     else{
-        SymbolTable *temp = (SymbolTable*)malloc(sizeof(SymbolTable));
-        temp->name = strdup(name);
-        temp->type = type;
-        temp->next = head;
-        head = temp;
+        temp = (SymbolTable*)malloc(sizeof(SymbolTable));
+        temp->name = (char*)malloc(sizeof(name)+1);
+        if(temp->name != NULL){
+            strcpy(temp->name, name);
+            temp->type = type;
+            temp->next = head;
+            head = temp;
+        }
     }
 }
-void print(){ // Print the Symbol Table
+void printSymbol(){ // Print the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){
-        printf("%s = %d\n", temp->name, temp->type);
+        printf("%s = %s\n", temp->name, temp->type);
         temp = temp->next;
     }
 }
@@ -74,18 +57,21 @@ void deleteSymbolTable(){
         deleteFromSymbolTable();
     }
 }
-
-// Create a new node for the AST
-TreeNode* createNode(char* data, char* type) {
+TreeNode* root = NULL; // Root of the AST
+// Create a new node for the AST without Type
+TreeNode* createNode(char* data) {
     TreeNode* newNode = (TreeNode*) malloc(sizeof(TreeNode)); // Allocate memory for the new node
     if (newNode) {// Initialize the new node
-        newNode->data = strdup(data);
-        newNode->left = NULL;
-        newNode->right = NULL;
+        newNode->data = (char*) malloc(sizeof(data)+1);
+        if(newNode->data != NULL){
+            strcpy(newNode->data, data);
+            newNode->type = NULL;
+            newNode->left = NULL;
+            newNode->right = NULL;
+        }
     }
     return newNode;
 }
-
 // Function to print the AST in prefix notation
 void printAST(TreeNode* root) {
     if (root) {

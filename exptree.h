@@ -13,6 +13,14 @@
         struct SymbolTable* next;
     } SymbolTable;
 
+    // Methods for Symbol Table
+    extern SymbolTable *head; // Head of the Symbol Table
+    SymbolTable* getSymbol(char* name);
+    void putSymbol(char* name, char* type);
+    void printSymbol();
+    void deleteFromSymbolTable();
+    void deleteSymbolTable();
+
     // Structure for a node in the AST
     typedef struct TreeNode {
         char* data;
@@ -21,18 +29,8 @@
         struct TreeNode* right;
     } TreeNode;
 
-    // Methods for Symbol Table
-    extern SymbolTable *head; // Head of the Symbol Table
-    SymbolTable* getsymbol(char* name);
-    bool checktype(char* value, char* type);
-    void putSymbol(char* name, char* type);
-    void print();
-    void deleteFromSymbolTable();
-    void deleteSymbolTable();
-
     // Create a new node for the AST
     TreeNode* createNode(char* data);
-
     // Function to print the AST in prefix notation
     void printAST(TreeNode* root);
 
