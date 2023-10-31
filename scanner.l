@@ -17,19 +17,19 @@ typestring \"[^\"\n]*\"
 \{          {return (LBRACK);}
 \(          {return (LPAR);}
 \)          {return (RPAR);}
-\+          { yylval.op_math = yytext;return (OP_MATH);}
-\-          {yylval.op_math = yytext; return (OP_MATH);}
-\*          {yylval.op_math = yytext; return (OP_MATH);}
-\/          {yylval.op_math = yytext; return (OP_MATH);}
-\^          {yylval.op_math = yytext; return (OP_MATH);}
-\%	        {yylval.op_math = yytext; return (OP_MATH);}
+\+          {yylval.op_math =strdup(yytext);return (OP_MATH);}
+\-          {yylval.op_math = strdup(yytext); return (OP_MATH);}
+\*          {yylval.op_math = strdup(yytext); return (OP_MATH);}
+\/          {yylval.op_math = strdup(yytext); return (OP_MATH);}
+\^          {yylval.op_math = strdup(yytext); return (OP_MATH);}
+\%	        {yylval.op_math = strdup(yytext); return (OP_MATH);}
 
-\==         {yylval.op_rel = yytext; return (OP_REL);}
-\!=         {yylval.op_rel = yytext; return (OP_REL);}
-\<          {yylval.op_rel = yytext; return (OP_REL);}
-\>          {yylval.op_rel = yytext; return (OP_REL);}
-\<\=        {yylval.op_rel = yytext; return (OP_REL);}
-\>\=        {yylval.op_rel = yytext; return (OP_REL);}
+\==         {yylval.op_rel = strdup(yytext); return (OP_REL);}
+\!=         {yylval.op_rel = strdup(yytext); return (OP_REL);}
+\<          {yylval.op_rel = strdup(yytext); return (OP_REL);}
+\>          {yylval.op_rel = strdup(yytext); return (OP_REL);}
+\<\=        {yylval.op_rel = strdup(yytext); return (OP_REL);}
+\>\=        {yylval.op_rel = strdup(yytext); return (OP_REL);}
 
 \=	        {yylval.ASSIGN = strdup(yytext); return (ASSIGN);}
 
@@ -38,9 +38,9 @@ write	    {return (WRITE);}
 read	    {return (READ);}
 if	        {return (IF);}
 
-string      {yylval.type = yytext; return (TIPO_DATO);}
-int         {yylval.type = yytext; return (TIPO_DATO);}
-float	    {yylval.type = yytext;return (TIPO_DATO);}
+string      {yylval.type = strdup(yytext); return (TIPO_DATO);}
+int         {yylval.type = strdup(yytext); return (TIPO_DATO);}
+float	    {yylval.type = strdup(yytext);return (TIPO_DATO);}
 
 {typeint}       { yylval.ival = atoi(yytext); return NUM; }
 {id}        { yylval.sval = strdup(yytext); return ID; }
@@ -49,5 +49,5 @@ float	    {yylval.type = yytext;return (TIPO_DATO);}
 
 \n {line_count++;}
 [ \t]+      {/*ignore*/}
-<<EOF>>     {return (TOK_EOF);}
+<<EOF>>     {return TOK_EOF;}
 %%

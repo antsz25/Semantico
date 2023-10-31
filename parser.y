@@ -21,15 +21,16 @@ TreeNode* root;
       char* op_rel;
       char* ASSIGN;
       char* WHILE;
+      char* IF;
       struct TreeNode* node;
 }
 %token RBRACK
 %token LBRACK
 %token LPAR
 %token RPAR
-%token WRITE
-%token READ
-%token IF
+%token <sval> WRITE
+%token <sval> READ
+%token <IF> IF
 %token TOK_EOF
 %token <WHILE> WHILE
 %token <ASSIGN> ASSIGN
@@ -47,7 +48,6 @@ TreeNode* root;
 %type <node> bloque_codigo
 %type <node> ecuaciones
 %type <node> defvar
-%type <node> inicioaux
 %type <node> valor_ecuaciones
 %type <node> valor
 %type <node> condicion
@@ -62,50 +62,36 @@ TreeNode* root;
 /*Simbolos no terminales*/
 %start root
 %%
-root :  instrucciones {
+root :  instrucciones{
             if($1 != NULL){
                 $$ = createNode("root"); 
                 $$->type = "void";
                 $$->left = $1; 
                 $$->right = NULL;
                 root = $$;
+                printAST(root);
+                freeAST(root);
             }
             else{
                 yyerror("Instrucciones nulas");
             }
         }
+        | TOK_EOF{
+            printAST($$);
+        }
         ;
-instrucciones   : instruccion inicioaux {
+instrucciones   : instruccion instrucciones {
                     if($1 != NULL && $2 != NULL){
-                        $$ = createNode("Instrucciones");
-                        $$->type = "void";
-                        $$->left = $1;
-                        $$->right = $2;         
+                        $$ = $1;
                     }
                     else{
                         yyerror("Instrucciones nulas");
                     }
                 }
+                | %empty{
+                    return;
+                }
                 ;
-inicioaux   : TOK_EOF {
-                printf("Fin de archivo\n");
-                if(root != NULL){
-                    printAST(root);
-                }
-                else{
-                    yyerror("Arbol vacio\n");
-                }
-            }
-            | instrucciones {
-                if($1 != NULL){
-                    printf("Instrucciones\n");
-                    $$ = $1;
-                }
-                else{
-                    yyerror("Instrucciones nulas");
-                }
-            }
-            ;
 instruccion : defvar {
                 if($1 != NULL){ 
                     $$=$1;
@@ -116,18 +102,43 @@ instruccion : defvar {
             }
             | cicloswhile {
                 if($1 != NULL){
-                    printf("Ciclo While\n");
-                    $$=$1;
+                    $$ = $1;
                 }
                 else{
                     yyerror("Instrucciones nulas");
                 }
             }
-            | pregunton {printf("Pregunton\n");}
-            | imprimirdatos {printf("Imprimir datos\n");}
-            | leerdatos {printf("Leer datos\n");}
+            | pregunton {
+                if($1 != NULL){
+                    $$ = $1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
+            }
+            | imprimirdatos {
+                if($1 != NULL){
+                    $$ = $1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
+            }
+            | leerdatos {
+                if($1 != NULL){
+                    $$ = $1;
+                }
+                else{
+                    yyerror("Instrucciones nulas");
+                }
+            }
             ;
-pregunton   : IF condicion bloque_codigo {}
+pregunton   : IF condicion bloque_codigo {
+                $$ = createNode($1);
+                $$->right = $2;
+                $$->left = $3;
+                printf("Pregunton: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
+            }
             ;
 defvar  : TIPO_DATO ID asignavalor {
             head = getSymbol($2);
@@ -135,10 +146,9 @@ defvar  : TIPO_DATO ID asignavalor {
                 yyerror("Variable ya declarada");
             }
             else{
-                putSymbol($2,$1);
-                head = getSymbol($2);
+                head = putSymbol($2,$1);
                 if(head != NULL){
-                    if(strcmp(head->type,$3->right->type)){
+                    if(strcmp(head->type,$3->right->type) == 0){
                         $$ = $3;
                         $$->type = head->type;
                         $$->left = createNode($2);
@@ -159,7 +169,7 @@ defvar  : TIPO_DATO ID asignavalor {
             head = getSymbol($1);
             if(head != NULL){
                 if(head->type !=NULL && $2->right->type !=NULL){
-                    if(strcmp(head->type,$2->right->type)){
+                    if(strcmp(head->type,$2->right->type) == 0){
                         $$ = $2;
                         $$->type = head->type;
                         $$->left = createNode($1);
@@ -194,8 +204,8 @@ valor   : NUM {
             char typestr[20];
             sprintf(typestr, "%d", $1);
             if(typestr!=NULL){
-            $$=createNode(typestr);
-            $$->type = "int";
+                $$=createNode(typestr);
+                $$->type = "int";
             }
             else{
                 printf("Valor nulo\n");
@@ -242,9 +252,9 @@ valor   : NUM {
         ;
 ecuaciones  : valor_ecuaciones OP_MATH valor_ecuaciones {
                 if($1 != NULL && $3 != NULL){
-                    if((strcmp($1->type,$3->type)) || 
-                        (strcmp($1->type, "float") && strcmp($3->type, "int")) || 
-                        (strcmp($1->type,"int") && strcmp($3->type,"float")))
+                    if((strcmp($1->type,$3->type) == 0) || 
+                        (strcmp($1->type, "float") ==0 && strcmp($3->type, "int") ==0) || 
+                        (strcmp($1->type,"int") == 0 && strcmp($3->type,"float") ==0))
                         {
                         $$ = createNode($2);
                         $$->type = $1->type;
@@ -296,25 +306,27 @@ valor_ecuaciones    : NUM {
 cicloswhile : WHILE condicion bloque_codigo {
                 if($2 != NULL && $3 != NULL){
                     $$ = createNode($1);
-                    $$->type = "void";
+                    $$->type = "while";
                     $$->left = $2;
                     $$->right = $3;
                     printf("Ciclo While: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
                 }
             }
             ;
-bloque_codigo   : LBRACK inicioaux RBRACK {
+bloque_codigo   : LBRACK instrucciones RBRACK {
                     if($2 != NULL){
                         $$ = $2;
                     }
-
+                    else{
+                        yyerror("Bloque Vacio");
+                    }
                 }
                 ;
 condicion   : valor OP_REL valor {
                 if($1 != NULL && $3 != NULL){
-                    if((strcmp($1->type,$3->type)) || 
-                        (strcmp($1->type, "float") && strcmp($3->type, "int")) || 
-                        (strcmp($1->type,"int") && strcmp($3->type,"float")))
+                    if((strcmp($1->type,$3->type) == 0) || 
+                        (strcmp($1->type, "float") ==0 && strcmp($3->type, "int") ==0) || 
+                        (strcmp($1->type,"int") == 0 && strcmp($3->type,"float") ==0))
                         {
                         $$ = createNode($2);
                         $$->type = "bool";
@@ -332,15 +344,36 @@ condicion   : valor OP_REL valor {
 
             }
             ;
-imprimirdatos   : WRITE valor {}
+imprimirdatos   : WRITE valor {
+                    if($2 != NULL){
+                        $$ = createNode($1);
+                        $$->type = "void";
+                        $$->left = $2;
+                        $$->right = NULL;
+                        printf("Imprimir datos: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n",$$->data,$$->left->data);
+                    }
+                    else{
+                        yyerror("Valor nulo");
+                    }
+                }
                 ;
-leerdatos       : READ valor {}
+leerdatos       : READ valor {
+                    if($2 != NULL){
+                        $$ = createNode($1);
+                        $$->type = "void";
+                        $$->left = $2;
+                        $$->right = NULL;
+                        printf("Leer datos: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n",$$->data,$$->left->data);
+                    }
+                    else{
+                        yyerror("Valor nulo");
+                    }
+                }
                 ;
 %%
 int main(int argc, char *argv[]){
     head = NULL;
-    root = createNode("root");
-    root->type = "void";
+    root = NULL;
     if (argc < 2) { //Utilizacion de archivo de entrada
         printf("Uso: %s archivo_de_entrada\n", argv[0]);
     }

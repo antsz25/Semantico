@@ -16,7 +16,7 @@
     // Methods for Symbol Table
     extern SymbolTable *head; // Head of the Symbol Table
     SymbolTable* getSymbol(char* name);
-    void putSymbol(char* name, char* type);
+    SymbolTable* putSymbol(char* name, char* type);
     void printSymbol();
     void deleteFromSymbolTable();
     void deleteSymbolTable();

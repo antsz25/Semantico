@@ -3,35 +3,37 @@
 #include <string.h>
 #include <stdbool.h>
 #include "exptree.h"
-
+extern SymbolTable* head; // Head of the Symbol Table
 //Methods for Symbol Table
-SymbolTable* getSymbol(char* name){ //Get the variable from the Symbol Table
-    SymbolTable *temp = head;
-    while(temp != NULL){
-        if(strcmp(temp->name, name) == 0){
-            return temp;
+SymbolTable *getSymbol (char *name )
+{
+    SymbolTable *ptr;
+    for (ptr = head; ptr != (SymbolTable *) 0;ptr = (SymbolTable *)ptr->next){
+        if (strcmp (ptr->name,name) == 0){
+            return ptr;
         }
-        temp = temp->next;
     }
-    return NULL;
+    return (SymbolTable *)0;
 }
-void putSymbol(char* name, char* type){ //Insert variable in the Symbol Table
-    SymbolTable *temp = head;
-    temp = getSymbol(name);
-    if(temp != NULL){ // Check if the variable is already declared
-        return;
+SymbolTable *putSymbol ( char* name, char* type)
+{
+    
+    SymbolTable *ptr;
+    ptr = (SymbolTable *) malloc (sizeof(SymbolTable));
+    ptr->name = (char *) malloc (strlen(name)+1);
+    strcpy (ptr->name,name);
+    ptr->type = (char *) malloc(strlen(type)+1);
+    strcpy(ptr->type,type);
+    ptr->next = (struct SymbolTable *)head;
+    if(head != NULL){
+        return head->next = ptr;
     }
     else{
-        temp = (SymbolTable*)malloc(sizeof(SymbolTable));
-        temp->name = (char*)malloc(sizeof(name)+1);
-        if(temp->name != NULL){
-            strcpy(temp->name, name);
-            temp->type = type;
-            temp->next = head;
-            head = temp;
-        }
+        head = ptr;
+        return ptr;
     }
 }
+
 void printSymbol(){ // Print the Symbol Table
     SymbolTable *temp = head;
     while(temp != NULL){
@@ -72,16 +74,15 @@ TreeNode* createNode(char* data) {
 }
 // Function to print the AST in prefix notation
 void printAST(TreeNode* root) {
-    if (root) {
+    if (root != NULL) {
         printf("%s ", root->data);
-        printf("%s ", root->type);
         printAST(root->left);
         printAST(root->right);
     }
 }
 // Function to free the memory of the AST
 void freeAST(TreeNode* root) {
-    if (root) {
+    if (root != NULL) {
         freeAST(root->left);
         freeAST(root->right);
         free(root->data);
