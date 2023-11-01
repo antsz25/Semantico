@@ -10,6 +10,7 @@ extern int line_count;
 extern SymbolTable* head;
 SymbolTable* sym;
 TreeNode* root;
+TreeNode* tmp = NULL;
 %}
 /*Simbolos Terminales*/
 %union{
@@ -65,35 +66,36 @@ TreeNode* root;
 %%
 root :  instrucciones{
             if($1 != NULL){
-                $$ = createNode("root"); 
-                $$->type = "void";
-                $$->left = $1; 
-                $$->right = NULL;
                 root = $$;
                 printAST(root);
-                freeAST(root);
             }
             else{
                 yyerror("Instrucciones nulas");
             }
         }
-        | TOK_EOF{
-            printAST($$);
-        }
         ;
 instrucciones   : instruccion instrucciones {
                     if($1 != NULL && $2 != NULL){
-                        $$ = $1;
+                        $$ = createNode("Instrucciones");
+                        $$->type = "void";
+                        $$->left = $1;
+                        $$->right = $2;
                     }
                     else{
-                        yyerror("Instrucciones nulas");
+                        if($1 != NULL && $2 == NULL){
+                            $$ = $1;
+                        }
+                        else{
+                            $$ = $2;
+                        }
                     }
+                    tmp = $$;
                 }
                 | %empty{
-                    return;
+                    $$ = tmp;
                 }
                 ;
-instruccion : defvar {
+instruccion :defvar {
                 if($1 != NULL){ 
                     $$=$1;
                 }

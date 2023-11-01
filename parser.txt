@@ -8,7 +8,9 @@ extern FILE* yyin;
 extern char* yytext;
 extern int line_count;
 extern SymbolTable* head;
+SymbolTable* sym;
 TreeNode* root;
+TreeNode* tmp;
 %}
 /*Simbolos Terminales*/
 %union{
@@ -82,14 +84,29 @@ root :  instrucciones{
         ;
 instrucciones   : instruccion instrucciones {
                     if($1 != NULL && $2 != NULL){
-                        $$ = $1;
+                        $$ = createNode("Instrucciones");
+                        $$->type = "void";
+                        $$->left = $1;
+                        $$->right = $2;
                     }
                     else{
-                        yyerror("Instrucciones nulas");
+                        if($1 != NULL && $2 == NULL){
+                            $$ = createNode("Instrucciones");
+                            $$->type = "void";
+                            $$->left = $1;
+                            $$->right = NULL;
+                        }
+                        else{
+                            $$ = createNode("Instrucciones");
+                            $$->type = "void";
+                            $$->left = $2;
+                            $$->right = NULL;
+                        }
                     }
+                    // tmp = $$;
                 }
                 | %empty{
-                    return;
+                    // $$ = tmp;
                 }
                 ;
 instruccion : defvar {
@@ -141,18 +158,18 @@ pregunton   : IF condicion bloque_codigo {
             }
             ;
 defvar  : TIPO_DATO ID asignavalor {
-            head = getSymbol($2);
-            if(head != NULL){
+            sym = getSymbol($2);
+            if(sym != NULL){
                 yyerror("Variable ya declarada");
             }
             else{
-                head = putSymbol($2,$1);
-                if(head != NULL){
-                    if(strcmp(head->type,$3->right->type) == 0){
+                sym = putSymbol($2,$1);
+                if(sym != NULL){
+                    if(strcmp(sym->type,$3->right->type) == 0){
                         $$ = $3;
-                        $$->type = head->type;
+                        $$->type = sym->type;
                         $$->left = createNode($2);
-                        $$->left->type = head->type;
+                        $$->left->type = sym->type;
                         $$->right = $3->right;
                         printf("Definicion de variable: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
                     }
@@ -166,14 +183,14 @@ defvar  : TIPO_DATO ID asignavalor {
             }
         }
         | ID asignavalor {
-            head = getSymbol($1);
-            if(head != NULL){
-                if(head->type !=NULL && $2->right->type !=NULL){
-                    if(strcmp(head->type,$2->right->type) == 0){
+            sym = getSymbol($1);
+            if(sym != NULL){
+                if(sym->type !=NULL && $2->right->type !=NULL){
+                    if(strcmp(sym->type,$2->right->type) == 0){
                         $$ = $2;
-                        $$->type = head->type;
+                        $$->type = sym->type;
                         $$->left = createNode($1);
-                        $$->left->type = head->type;
+                        $$->left->type = sym->type;
                         $$->right = $2->right;
                         printf("Asignacion de variable: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
                     }
@@ -213,10 +230,10 @@ valor   : NUM {
             }
         }
         | ID {            
-            head = getSymbol($1);
-            if(head != NULL){
+            sym = getSymbol($1);
+            if(sym != NULL){
                 $$ = createNode($1);
-                $$->type = head->type;
+                $$->type = sym->type;
             }
             else{
                 yyerror("Variable no declarada");
@@ -293,10 +310,10 @@ valor_ecuaciones    : NUM {
                         }
                     }
                     | ID {
-                        head = getSymbol($1);
-                        if(head != NULL){
+                        sym = getSymbol($1);
+                        if(sym != NULL){
                             $$=createNode($1);
-                            $$->type = head->type;
+                            $$->type = sym->type;
                         }
                         else{
                             yyerror("Variable no declarada");
@@ -372,7 +389,7 @@ leerdatos       : READ valor {
                 ;
 %%
 int main(int argc, char *argv[]){
-    head = NULL;
+    // head = NULL;
     root = NULL;
     if (argc < 2) { //Utilizacion de archivo de entrada
         printf("Uso: %s archivo_de_entrada\n", argv[0]);

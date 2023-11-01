@@ -1,9 +1,5 @@
-int x = 4 + 3
-x = 5
-if x>5{
-    int h = x + 5
-    if h < 2{
-        int y = h 
-        int z = y + x
-    }
+int x = 3
+int y = x
+if x < y {
+    int z = x + y
 }
