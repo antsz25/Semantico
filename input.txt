@@ -2,4 +2,8 @@ int x = 3
 int y = x
 if x < y {
     int z = x + y
+    while x<z {
+        x = x + 1
+    }
 }
+

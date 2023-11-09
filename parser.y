@@ -8,12 +8,15 @@ extern FILE* yyin;
 extern char* yytext;
 extern int line_count;
 extern SymbolTable* head;
+extern IntermedioCode* headCode;
 SymbolTable* sym;
 TreeNode* root;
 TreeNode* tmp = NULL;
+
 %}
 /*Simbolos Terminales*/
 %union{
+
       char* string;
       int ival;
       char* sval;
@@ -26,6 +29,8 @@ TreeNode* tmp = NULL;
       char* IF;
       struct TreeNode* node;
 }
+
+
 %token RBRACK
 %token LBRACK
 %token LPAR
@@ -61,6 +66,7 @@ TreeNode* tmp = NULL;
 %type <node> asignavalor
 %type <node> root
 
+
 /*Simbolos no terminales*/
 %start root
 %%
@@ -76,7 +82,21 @@ root :  instrucciones{
         ;
 instrucciones   : instruccion instrucciones {
                     if($1 != NULL && $2 != NULL){
-                        $$ = createNode("Instrucciones");
+                        if($1->type == "if"){
+                        $$ = createNode("L3");
+
+                        }
+                        else{
+                            if($1->type=="while")
+                            {
+                        $$ = createNode("L2");
+                                
+                            }
+                            else{
+                        $$ = createNode("L1");
+
+                            }
+                        }
                         $$->type = "void";
                         $$->left = $1;
                         $$->right = $2;
@@ -138,6 +158,7 @@ instruccion :defvar {
             ;
 pregunton   : IF condicion bloque_codigo {
                 $$ = createNode($1);
+                $$-> type = "if";
                 $$->right = $2;
                 $$->left = $3;
                 printf("Pregunton: \n\t Nodo Padre: %s \n\t Nodo Izquierdo: %s \n\t Nodo Derecho: %s \n",$$->data,$$->left->data,$$->right->data);
@@ -145,6 +166,7 @@ pregunton   : IF condicion bloque_codigo {
             ;
 defvar  : TIPO_DATO ID asignavalor {
             sym = getSymbol($2);
+            
             if(sym != NULL){
                 yyerror("Variable ya declarada");
             }
@@ -389,6 +411,7 @@ int main(int argc, char *argv[]){
     yyin = archivo; // Archivo a escanear
     yyparse();
     fclose(archivo);//Cerradura de archivo
+    generate_intermediate_code();
     return 0;
 }
 void yyerror(const char* message) {

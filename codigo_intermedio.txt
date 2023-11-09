@@ -1,0 +1,4 @@
+Definicion de variable: 
+	 Nodo Padre: = 
+	 Nodo Izquierdo: x 
+	 Nodo Derecho: 3 

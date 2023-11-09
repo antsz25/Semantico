@@ -3,7 +3,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include "exptree.h"
+
 SymbolTable *head = NULL;
+IntermedioCode* headCode = NULL;
+
 // Methods for Symbol Table
 SymbolTable *getSymbol(char *name)
 {
@@ -97,6 +100,7 @@ SymbolTable* putSymbol(char *name, char *type)
             printf("%s ", root->data);
             printAST(root->left);
             printAST(root->right);
+            pr
         }
     }
     // Function to free the memory of the AST
