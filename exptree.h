@@ -41,13 +41,6 @@ void printAST(TreeNode *root);
 // Function to free the memory of the AST
 void freeAST(TreeNode *root);
 
-/*Creacion Codigo Intermedio*/
-typedef struct IntermedioCode
-{
-    char *op;
-    char *arg1;
-    char *arg2;
-    char *res; 
-    struct IntermedioCode *next;
-} IntermedioCode;
+void generateIntermediateCode(TreeNode *root);
+
 #endif // EXPTREE_H
